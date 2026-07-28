@@ -1,13 +1,38 @@
 // → วางไว้ที่  lib/db.ts
 // ตัวช่วยคุย Supabase ทั้งหมดรวมไว้ที่นี่
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export const db = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } },
-);
+// สร้าง client แบบ lazy — ห้ามสร้างตอนโหลดโมดูล
+//
+// ถ้าสร้างตอน import แล้ว env var ยังไม่ถูกตั้ง ฟังก์ชันจะพังทั้งตัวทันที
+// ตั้งแต่ยังไม่ทันเข้า handler ทำให้แม้แต่ GET ธรรมดาก็ได้ 500 ที่อ่านไม่รู้เรื่อง
+let _client: SupabaseClient | null = null;
+
+function client(): SupabaseClient {
+  if (_client) return _client;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      'ยังไม่ได้ตั้งค่า SUPABASE_URL และ/หรือ SUPABASE_SERVICE_ROLE_KEY ' +
+      'ใน Environment Variables ของ Vercel',
+    );
+  }
+
+  _client = createClient(url, key, { auth: { persistSession: false } });
+  return _client;
+}
+
+// ห่อด้วย Proxy เพื่อให้เรียก db.from(...) ได้เหมือนเดิมทุกที่
+// แต่ client จริงจะถูกสร้างตอนใช้งานครั้งแรกเท่านั้น
+export const db: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get: (_target, prop) => {
+    const value = (client() as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === 'function' ? value.bind(client()) : value;
+  },
+});
 
 export type Group = {
   id: string;
