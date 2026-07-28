@@ -48,26 +48,58 @@ line-task-splitter/
 
 ## 2️⃣ LINE Official Account + Messaging API
 
-1. เข้า https://developers.line.biz/console/ ล็อกอินด้วย LINE ส่วนตัว
-2. **Create a new provider** (ใส่ชื่อร้านได้เลย)
-3. ในโปรไวเดอร์นั้น → **Create a Messaging API channel**
-   - ชื่อ channel = ชื่อบอทที่จะโชว์ในกลุ่ม
-   - Category เลือกให้ตรงกับธุรกิจ
-4. แท็บ **Basic settings** → เก็บ `Channel secret` → `LINE_CHANNEL_SECRET`
-5. แท็บ **Messaging API** → ล่างสุด `Channel access token (long-lived)` กด **Issue** → `LINE_CHANNEL_ACCESS_TOKEN`
+> ⚠️ **LINE เปลี่ยนขั้นตอนแล้ว** — เดิมสร้าง Messaging API channel ได้จาก Developers Console ตรง ๆ
+> ตอนนี้ทำไม่ได้แล้ว ต้องสร้าง **LINE Official Account (OA)** ก่อน แล้วค่อยเปิด Messaging API ทีหลัง
 
-### ตั้งค่าที่ "ต้องทำ" ไม่งั้นบอทใช้ในกลุ่มไม่ได้
+### 2.1 สร้าง LINE Official Account
 
-ในแท็บ **Messaging API**:
+1. เข้า https://entry.line.biz/form/entry/unverified (ล็อกอินด้วย LINE ส่วนตัว)
+2. กรอกฟอร์ม:
+
+| ช่อง | ใส่อะไร |
+|---|---|
+| ชื่อบัญชี | ชื่อบอทที่จะโชว์ในกลุ่ม เช่น `TaskBOT` (เปลี่ยนทีหลังได้) |
+| อีเมล | อีเมลคุณ |
+| ประเทศที่ตั้งบริษัท | ไทย |
+| ชื่อบริษัท/ธุรกิจ | ชื่อร้าน |
+| ประเภทธุรกิจ | เลือกให้ตรง เช่น อาหารและเครื่องดื่ม → ร้านเครื่องดื่ม |
+
+3. ยืนยัน reCAPTCHA → ตรวจสอบข้อมูล → สมัคร
+
+> บัญชีแบบ **unverified** (ไม่มีโล่) ใช้ Messaging API ได้ครบทุกอย่างที่โปรเจกต์นี้ต้องการ
+> ไม่ต้องยื่นเอกสารขอ verify ก็ได้
+
+### 2.2 เปิด Messaging API
+
+1. เข้า https://manager.line.biz/ → เลือกบัญชีที่เพิ่งสร้าง
+2. **Settings (ตั้งค่า)** → **Messaging API**
+3. กด **Enable Messaging API / ใช้งาน Messaging API**
+4. เลือก **provider** ที่มีอยู่ (เช่น `TaskBOT`) หรือสร้างใหม่
+5. ยืนยัน — ระบบจะสร้าง Messaging API channel ให้อัตโนมัติ
+
+### 2.3 เก็บ key
+
+กลับไปที่ https://developers.line.biz/console/ → จะเห็น channel ที่เพิ่งถูกสร้าง
+
+- แท็บ **Basic settings** → `Channel secret` → ใช้เป็น `LINE_CHANNEL_SECRET`
+- แท็บ **Messaging API** → ล่างสุด `Channel access token (long-lived)` กด **Issue** → ใช้เป็น `LINE_CHANNEL_ACCESS_TOKEN`
+
+> 🔐 สอง key นี้เอาไปใส่ใน Environment Variables ของ Vercel เท่านั้น
+> ห้าม commit ขึ้น git และไม่ต้องส่งให้ใครดู
+
+### 2.4 ตั้งค่าที่ "ต้องทำ" ไม่งั้นบอทใช้ในกลุ่มไม่ได้
+
+ใน **LINE Official Account Manager** (https://manager.line.biz/) → **ตั้งค่า → การตอบกลับ (Response settings)**:
 
 | การตั้งค่า | ต้องเป็น | เหตุผล |
 |---|---|---|
-| Allow bot to join group chats | **Enabled** | ไม่งั้นเชิญเข้ากลุ่มไม่ได้ |
-| Auto-reply messages | **Disabled** | ไม่งั้นบอทตอบข้อความอัตโนมัติซ้อนกัน |
-| Greeting messages | **Disabled** | เหมือนกัน |
-| Webhook | **Enabled** | หัวใจของระบบ |
+| Allow bot to join group chats / อนุญาตให้เข้ากลุ่ม | **เปิด** | ไม่งั้นเชิญบอทเข้ากลุ่มไม่ได้เลย |
+| Auto-reply messages / ตอบกลับอัตโนมัติ | **ปิด** | ไม่งั้นบอทตอบข้อความสำเร็จรูปซ้อนกับของเรา |
+| Greeting messages / ข้อความต้อนรับ | **ปิด** | เหมือนกัน |
+| Webhook | **เปิด** | หัวใจของระบบ |
 
-> การปิด auto-reply ต้องไปทำใน **LINE Official Account Manager** (มีลิงก์จากหน้านั้น) → Settings → Response settings
+> โหมดการตอบกลับให้เลือกเป็น **Bot / แชทบอท** ไม่ใช่ **Chat / แชท**
+> ถ้าเลือกผิด ข้อความจะไม่ถูกส่งมาที่ webhook ของเรา
 
 ---
 
