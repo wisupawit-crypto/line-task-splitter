@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env / secrets  ← สำคัญมาก อย่าเผลอ commit LINE token
+.env
+.env.local
+.env.*.local
+*.pem
+secrets.json
+
+# build output
+dist/
+build/
+.next/
+out/
+.vercel/
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor
+.vscode/
+.idea/
+*.swp

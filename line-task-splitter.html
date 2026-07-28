@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE Task Splitter — โหมดคำสั่ง + ไฮบริด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#06C755; --green-d:#05a648; --ink:#1f2933; --muted:#7b8794;
+    --bg:#f4f6f8; --card:#fff; --line:#e4e7eb; --amber:#f59e0b; --amber-bg:#fffbeb;
+    --red:#ef4444; --blue:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(120deg,#06C755,#05a648);color:#fff;padding:20px}
+  header .wrap{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:44px;height:44px;border-radius:12px;background:#fff;display:grid;place-items:center;font-weight:700;color:var(--green);font-size:20px}
+  header h1{margin:0;font-size:20px;font-weight:700}
+  header p{margin:2px 0 0;font-size:13px;opacity:.92}
+  .badge-demo{margin-left:auto;background:rgba(255,255,255,.2);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .container{max-width:1180px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
+  @media(max-width:900px){.container{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .panel h2{margin:0 0 4px;font-size:15px;font-weight:700}
+  .panel .sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+  textarea{width:100%;min-height:300px;border:1px solid var(--line);border-radius:12px;padding:12px;font-family:'Sarabun',sans-serif;font-size:13.5px;resize:vertical;background:#fafbfc}
+  textarea:focus{outline:none;border-color:var(--green)}
+  .row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{font-family:'Sarabun',sans-serif;border:none;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--green);color:#fff;flex:1}
+  .btn-primary:hover{background:var(--green-d)}
+  .btn-ghost{background:#eef1f4;color:var(--ink)}
+  .btn-ghost:hover{background:#e2e7ec}
+
+  /* mode switch */
+  .modes{display:flex;gap:6px;background:#eef1f4;padding:4px;border-radius:12px;margin-bottom:12px}
+  .mode{flex:1;text-align:center;padding:8px 6px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .mode.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .mode small{display:block;font-weight:400;font-size:10.5px;opacity:.8}
+
+  .syntax{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px}
+  .syntax code{background:#fff;border:1px solid #bbf7d0;border-radius:5px;padding:1px 6px;font-size:12px}
+
+  .stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .stat{flex:1;min-width:82px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:9px 10px;text-align:center}
+  .stat .n{font-size:21px;font-weight:700;color:var(--green-d);line-height:1.2}
+  .stat .l{font-size:11px;color:var(--muted)}
+  .stat.warn{background:var(--amber-bg);border-color:#fde68a}
+  .stat.warn .n{color:var(--amber)}
+  .stat.miss{background:#fef2f2;border-color:#fecaca}
+  .stat.miss .n{color:var(--red)}
+
+  .person{border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+  .person-head{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+  .person-head .name{font-weight:700;font-size:14px}
+  .person-head .cnt{margin-left:auto;font-size:11.5px;color:var(--muted);background:#eef1f4;padding:3px 9px;border-radius:20px}
+  .task{display:flex;gap:9px;padding:9px 13px;border-bottom:1px dashed var(--line);align-items:flex-start}
+  .task:last-child{border-bottom:none}
+  .task.sug{background:var(--amber-bg)}
+  .chk{width:17px;height:17px;border:2px solid var(--green);border-radius:5px;flex:none;margin-top:3px}
+  .chk.q{border-color:var(--amber);border-radius:50%;display:grid;place-items:center;font-size:10px;color:var(--amber);font-weight:700}
+  .task .t{flex:1;font-size:13.5px}
+  .task .raw{color:var(--muted);font-size:11.5px;margin-top:2px;font-style:italic}
+  .meta{margin-top:4px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .tag{font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:600}
+  .tag.due{background:#eff6ff;color:var(--blue)}
+  .tag.nodue{background:#f1f5f9;color:var(--muted)}
+  .tag.day{background:#f5f3ff;color:#7c3aed}
+  .tag.src-cmd{background:#dcfce7;color:var(--green-d)}
+  .tag.src-ai{background:#fef3c7;color:#b45309}
+  .mini{font-size:11px;padding:4px 10px;border-radius:7px}
+  .mini.yes{background:var(--green);color:#fff}
+  .mini.no{background:#e2e8f0;color:var(--ink)}
+
+  .preview{margin:0 13px 12px;background:#e9f9ef;border:1px solid #bbf7d0;border-radius:10px;padding:9px 11px;font-size:12.5px}
+  .preview .pv-h{font-size:10.5px;color:var(--green-d);font-weight:700;margin-bottom:3px}
+  .empty{text-align:center;color:var(--muted);padding:38px 10px;font-size:14px}
+  .callout{margin-top:14px;font-size:12px;color:var(--muted);background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:11px 13px}
+  .callout b{color:var(--ink)}
+  .missed{margin-top:14px;border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:11px 13px}
+  .missed h3{margin:0 0 6px;font-size:12.5px;color:#b91c1c}
+  .missed div{font-size:12px;color:#7f1d1d;padding:3px 0;border-bottom:1px dashed #fecaca}
+  .missed div:last-child{border:none}
+  footer{max-width:1180px;margin:0 auto;padding:4px 20px 30px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">✔</div>
+    <div>
+      <h1>LINE Task Splitter</h1>
+      <p>เทียบกันชัด ๆ ว่า “บังคับใช้คำสั่ง” กับ “ไฮบริด” จับงานได้ต่างกันแค่ไหน</p>
+    </div>
+    <span class="badge-demo">PROTOTYPE v2</span>
+  </div>
+</header>
+
+<div class="container">
+  <!-- LEFT -->
+  <div class="panel">
+    <h2>1 · บทสนทนาในกลุ่ม</h2>
+    <p class="sub">ตัวอย่างนี้จงใจผสม — บางข้อความใช้คำสั่ง บางข้อความพิมพ์ตามสบายแบบที่คนทำจริง</p>
+    <div class="syntax">
+      <b>รูปแบบคำสั่ง</b><br>
+      <code>/งาน @ชื่อ รายละเอียด เวลา</code> — เวลาใส่หรือไม่ใส่ก็ได้<br>
+      <span style="color:#7b8794">mention ได้หลายคนพร้อมกัน เช่น <code>/งาน @ฝน @มิ้นท์ ล้างเครื่อง</code></span>
+    </div>
+    <textarea id="input"></textarea>
+    <div class="row">
+      <button class="btn-primary" onclick="run()">⚡ แยกงาน</button>
+      <button class="btn-ghost" onclick="loadSample()">โหลดตัวอย่าง</button>
+      <button class="btn-ghost" onclick="clearAll()">ล้าง</button>
+    </div>
+    <div class="callout">
+      <b>ทำไมคำสั่งต้องมี @</b> — ในของจริง LINE จะส่ง <i>userId</i> ของคนที่ถูก mention มาให้บอทตรง ๆ
+      แปลว่าบอทรู้ทันทีว่าต้อง DM ไปหา account ไหน ไม่ต้องเดาจากชื่อเล่น (มิ้นท์ / มิ้น / Mint)
+      ซึ่งเป็นปัญหาที่ AI เก่งแค่ไหนก็แก้ไม่ได้
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel">
+    <h2>2 · ผลลัพธ์</h2>
+    <p class="sub">สลับโหมดเพื่อดูว่าถ้าบังคับคำสั่งอย่างเดียว จะมีงานหลุดไปเท่าไหร่</p>
+
+    <div class="modes">
+      <div class="mode on" id="m-cmd" onclick="setMode('cmd')">🔒 คำสั่งอย่างเดียว<small>แม่น 100% แต่คนลืมใช้</small></div>
+      <div class="mode" id="m-hyb" onclick="setMode('hyb')">🤝 ไฮบริด<small>คำสั่ง + บอทสะกิดถาม</small></div>
+    </div>
+
+    <div id="stats" class="stats" style="display:none"></div>
+    <div id="output"><div class="empty">👈 กด “โหลดตัวอย่าง” เพื่อเริ่ม</div></div>
+    <div id="missed"></div>
+  </div>
+</div>
+<footer>prototype ทำงานในเบราว์เซอร์ล้วน ไม่ส่งข้อมูลออกไปไหน</footer>
+
+<script>
+/* ---------------- ตัวอย่างแชท: ผสมทั้งใช้คำสั่งและไม่ใช้ ---------------- */
+const SAMPLE = `หัวหน้า: อรุณสวัสดิ์ทุกคน วันนี้ของเข้าเยอะหน่อยนะ
+หัวหน้า: /งาน @ฝน เช็คสต็อกแก้วกับหลอด ก่อนบ่าย 3
+ฝน: ได้ค่ะ
+หัวหน้า: /งาน @มิ้นท์ ไปรับของหน้าร้าน 10 โมง
+หัวหน้า: โบ๊ทปิดยอดขายเมื่อวานส่งในกลุ่มก่อนเที่ยงด้วยนะ
+โบ๊ท: รับทราบครับ
+หัวหน้า: อ้อ ฝนอย่าลืมสั่งนมเพิ่ม 2 ลัง ภายในวันนี้
+หัวหน้า: /งาน @มิ้นท์ ทำความสะอาดเครื่องปั่น ตอนปิดร้าน
+แก้ม: พี่คะ พรุ่งนี้หนูเข้ากะบ่ายค่ะ
+หัวหน้า: โอเคแก้ม งั้นพรุ่งนี้ช่วยเปิดร้าน 9 โมงแทนมิ้นท์ด้วย
+หัวหน้า: /งาน @โบ๊ท @ฝน เติมน้ำเชื่อมให้เต็มทุกขวด ก่อนเปิดร้าน
+หัวหน้า: เดี๋ยวใครว่างช่วยเช็ดกระจกหน้าร้านหน่อย
+หัวหน้า: มิ้นท์ฝากโทรหาซัพน้ำแข็งด้วยนะ ของขาดบ่อย`;
+
+const ACTION=['ช่วย','เช็ค','เช็ด','ตรวจ','สั่ง','รับของ','ไปรับ','ปิดยอด','ทำความสะอาด','ล้าง','เตรียม','จัด','เติม','นับ','ส่ง','โทร','เปิดร้าน','ปิดร้าน','ดูแล','แพ็ค','ชง','สต็อก','อย่าลืม','ฝาก','จ่าย','เก็บ','คีย์'];
+const ACK=['ได้ค่ะ','ได้ครับ','รับทราบ','โอเค','ครับผม','จ้า','โอเคค่ะ'];
+const PALETTE=['#06C755','#7c3aed','#f59e0b','#ef4444','#0ea5e9','#ec4899','#14b8a6','#8b5e34'];
+
+let MODE='cmd';
+let STATE={confirmed:[],suggested:[],missed:[],roster:[]};
+
+/* ---------------- parsing ---------------- */
+function parseLines(raw){
+  const out=[];
+  raw.split(/\n/).forEach(line=>{
+    line=line.trim(); if(!line) return;
+    let m=line.match(/^(\d{1,2}[:.]\d{2})\s+([^\t]+?)\t(.+)$/);
+    if(m){out.push({sender:m[2].trim(),text:m[3].trim()});return;}
+    m=line.match(/^([^:：]{1,20})[:：]\s*(.+)$/);
+    if(m){out.push({sender:m[1].trim(),text:m[2].trim()});return;}
+    out.push({sender:'?',text:line});
+  });
+  return out;
+}
+function detectDue(t){
+  const pats=[/ก่อนเที่ยงวัน/,/ก่อนเที่ยง/,/ภายในเที่ยง/,
+    /ก่อนบ่าย\s?\d{1,2}(\s?โมง)?/,/บ่าย\s?\d{1,2}(\s?โมง)?/,
+    /ก่อน\s?\d{1,2}\s?โมง/,/\d{1,2}\s?โมงเช้า/,/\d{1,2}\s?โมงเย็น/,/\d{1,2}\s?โมง/,
+    /\d{1,2}[:.]\d{2}\s?น\.?/,/\d{1,2}[:.]\d{2}/,/\d{1,2}\s?ทุ่ม/,
+    /ตอนปิดร้าน/,/ก่อนเปิดร้าน/,/ตอนเปิดร้าน/,/ภายในวันนี้/,/ก่อนเลิกงาน/];
+  for(const p of pats){const r=t.match(p); if(r) return r[0].trim();}
+  return null;
+}
+function detectDay(t){
+  if(/พรุ่งนี้/.test(t))return'พรุ่งนี้';
+  if(/มะรืน/.test(t))return'มะรืน';
+  if(/วันนี้/.test(t))return'วันนี้';
+  return null;
+}
+
+/* คำสั่ง: /งาน @ชื่อ [@ชื่อ2] รายละเอียด [เวลา] */
+function parseCommand(msg){
+  const m=msg.text.match(/^\/(งาน|task|มอบ)\s+(.+)$/);
+  if(!m) return null;
+  let body=m[2];
+  const mentions=[...body.matchAll(/@([^\s@]+)/g)].map(x=>x[1]);
+  if(mentions.length===0) return {error:'ไม่ได้ระบุ @ ว่าใครรับงาน', raw:msg.text};
+  const detail=body.replace(/@[^\s@]+/g,'').trim();
+  return {assignees:mentions, detail, due:detectDue(detail), day:detectDay(detail), raw:msg.text, src:'cmd'};
+}
+
+/* heuristic: เดาว่าน่าจะเป็นงาน (ใช้เป็น "ข้อเสนอ" เท่านั้น) */
+function guessTask(msg,roster){
+  if(/^\//.test(msg.text)) return null;
+  if(ACK.some(a=>msg.text.replace(/\s/g,'').includes(a)) && msg.text.length<15) return null;
+  if(!ACTION.some(a=>msg.text.includes(a))) return null;
+  let assignee=null,pos=1e9;
+  roster.forEach(n=>{
+    if(n===msg.sender) return;
+    const i=msg.text.indexOf(n);
+    if(i>-1&&i<pos){pos=i;assignee=n;}
+  });
+  const detail=msg.text;
+  if(!assignee) return {unknown:true, detail, raw:msg.text};
+  return {assignees:[assignee], detail, due:detectDue(detail), day:detectDay(detail), raw:msg.text, src:'ai'};
+}
+
+function run(){
+  const msgs=parseLines(document.getElementById('input').value);
+  const roster=[...new Set(msgs.map(m=>m.sender).filter(s=>s!=='?'))];
+  const confirmed=[],suggested=[],missed=[];
+
+  msgs.forEach(m=>{
+    const c=parseCommand(m);
+    if(c){
+      if(c.error){missed.push('⚠️ '+c.raw+' → '+c.error);return;}
+      c.assignees.forEach(a=>confirmed.push({...c,who:a}));
+      return;
+    }
+    const g=guessTask(m,roster);
+    if(!g) return;
+    if(g.unknown){missed.push('❓ “'+g.raw+'” → ดูเหมือนงาน แต่ไม่รู้ว่าใครรับ');return;}
+    suggested.push({...g,who:g.assignees[0],id:'s'+suggested.length,status:'pending'});
+  });
+
+  STATE={confirmed,suggested,missed,roster};
+  render();
+}
+
+function setMode(m){
+  MODE=m;
+  document.getElementById('m-cmd').className='mode'+(m==='cmd'?' on':'');
+  document.getElementById('m-hyb').className='mode'+(m==='hyb'?' on':'');
+  render();
+}
+function decide(id,ok){
+  const s=STATE.suggested.find(x=>x.id===id);
+  if(s) s.status=ok?'accepted':'rejected';
+  render();
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  const out=document.getElementById('output'), statsEl=document.getElementById('stats'), missEl=document.getElementById('missed');
+  if(STATE.confirmed.length===0 && STATE.suggested.length===0){
+    statsEl.style.display='none';missEl.innerHTML='';
+    out.innerHTML='<div class="empty">👈 กด “โหลดตัวอย่าง” เพื่อเริ่ม</div>';return;
+  }
+
+  const useSug = MODE==='hyb';
+  const activeSug = useSug ? STATE.suggested.filter(s=>s.status!=='rejected') : [];
+  const byPerson={};
+  STATE.confirmed.forEach(t=>(byPerson[t.who]=byPerson[t.who]||[]).push({...t,kind:'cmd'}));
+  activeSug.forEach(t=>(byPerson[t.who]=byPerson[t.who]||[]).push({...t,kind:'sug'}));
+
+  const nCmd=STATE.confirmed.length;
+  const nSug=activeSug.length;
+  const lost=STATE.suggested.length + STATE.missed.length; // งานที่คำสั่งล้วนจะพลาด
+
+  statsEl.style.display='flex';
+  statsEl.innerHTML = MODE==='cmd'
+    ? `<div class="stat"><div class="n">${nCmd}</div><div class="l">งานที่จับได้</div></div>
+       <div class="stat"><div class="n">100%</div><div class="l">ความแม่น</div></div>
+       <div class="stat miss"><div class="n">${lost}</div><div class="l">งานที่หลุด ❗</div></div>`
+    : `<div class="stat"><div class="n">${nCmd}</div><div class="l">จากคำสั่ง</div></div>
+       <div class="stat warn"><div class="n">${nSug}</div><div class="l">บอทสะกิดถาม</div></div>
+       <div class="stat"><div class="n">${nCmd+nSug}</div><div class="l">รวมทั้งหมด</div></div>
+       <div class="stat miss"><div class="n">${STATE.missed.length}</div><div class="l">ยังหลุด</div></div>`;
+
+  const names=Object.keys(byPerson);
+  out.innerHTML = names.length===0
+    ? '<div class="empty">ไม่มีใครได้รับงานเลย 😅</div>'
+    : names.map(n=>{
+      const color=PALETTE[STATE.roster.indexOf(n)%PALETTE.length]||'#06C755';
+      const list=byPerson[n];
+      const rows=list.map(t=>{
+        const due=t.due?`<span class="tag due">⏰ ${esc(t.due)}</span>`:`<span class="tag nodue">ไม่มีกำหนด</span>`;
+        const day=t.day?`<span class="tag day">${t.day}</span>`:'';
+        if(t.kind==='cmd'){
+          return `<div class="task"><div class="chk"></div><div class="t">${esc(t.detail)}
+            <div class="meta"><span class="tag src-cmd">✓ จากคำสั่ง</span>${day}${due}</div></div></div>`;
+        }
+        const pend=t.status==='pending';
+        return `<div class="task sug"><div class="chk q">?</div><div class="t">${esc(t.detail)}
+          <div class="raw">บอทเดาเอง — ไม่ได้ใช้คำสั่ง</div>
+          <div class="meta"><span class="tag src-ai">🤖 รอยืนยัน</span>${day}${due}</div>
+          ${pend?`<div class="meta"><button class="mini yes" onclick="decide('${t.id}',1)">✓ ใช่ สร้างเลย</button>
+            <button class="mini no" onclick="decide('${t.id}',0)">✕ ไม่ใช่งาน</button></div>`
+            :`<div class="meta"><span class="tag src-cmd">✓ ยืนยันแล้ว</span></div>`}
+          </div></div>`;
+      }).join('');
+      const dmItems=list.filter(t=>t.kind==='cmd'||t.status==='accepted');
+      const dm=dmItems.length?`สวัสดีค่ะคุณ${n} 🌱 งานของวันนี้นะคะ:\n`+
+        dmItems.map((t,i)=>`${i+1}. ${t.detail}${t.due?' (⏰ '+t.due+')':''}`).join('\n')+
+        `\n\nกด ✅ เมื่อทำเสร็จได้เลยค่ะ`:null;
+      return `<div class="person">
+        <div class="person-head">
+          <div class="avatar" style="background:${color}">${esc(n.slice(0,1))}</div>
+          <div class="name">${esc(n)}</div>
+          <div class="cnt">${list.length} งาน</div>
+        </div>${rows}
+        ${dm?`<div class="preview"><div class="pv-h">💬 ข้อความที่บอทจะ DM หา ${esc(n)}</div><div style="white-space:pre-line">${esc(dm)}</div></div>`:''}
+      </div>`;
+    }).join('');
+
+  // รายการที่หลุด
+  const lostList = MODE==='cmd'
+    ? [...STATE.suggested.map(s=>'“'+s.raw+'” → สั่งงานโดยไม่ใช้คำสั่ง'),...STATE.missed]
+    : STATE.missed;
+  missEl.innerHTML = lostList.length
+    ? `<div class="missed"><h3>${MODE==='cmd'?'❗ งานที่ระบบมองไม่เห็น (เพราะไม่ได้ใช้คำสั่ง)':'❗ ยังหลุดอยู่ แม้ในโหมดไฮบริด'}</h3>${lostList.map(x=>`<div>${esc(x)}</div>`).join('')}</div>`
+    : '';
+}
+
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function loadSample(){document.getElementById('input').value=SAMPLE;run();}
+function clearAll(){document.getElementById('input').value='';STATE={confirmed:[],suggested:[],missed:[],roster:[]};render();}
+loadSample();
+</script>
+</body>
+</html>
